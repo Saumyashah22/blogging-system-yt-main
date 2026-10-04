@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+  <h2 class="page-title">Search results for: {{ keyword }}</h2>
+
+  <div class="row">
+    {% if blogs %}
+    {% for i in blogs %}
+    <div class="col-lg-6 mb-3">
+      <article class="story-card">
+        <div class="story-meta">
+          <span>{{ i.created_at | timesince }} ago</span>
+          <span>•</span>
+          <span>{{ i.author }}</span>
+        </div>
+        <h3><a href="{% url 'blogs' i.slug %}">{{ i.title }}</a></h3>
+        <p>{{ i.short_description | truncatewords:30 }}</p>
+      </article>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="col-12">
+      <div class="side-panel">
+        <p>No posts matched your search. Try a different keyword.</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

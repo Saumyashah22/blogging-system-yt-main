@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+
+<div class="container dashboard-layout">
+<div class="row">
+    <!-- Left sidebar -->
+    <!-- load the sidebar here -->
+    {% include 'dashboard/sidebar.html' %}
+
+    <!-- Right side content -->
+    <div class="col-md-9 dashboard-main">
+        <div class="dashboard-titlebar">
+            <div>
+                <p class="dashboard-eyebrow">Structure your stories</p>
+                <h1>{% if user.is_superuser %}All Categories{% else %}My Categories{% endif %}</h1>
+            </div>
+            <a href="{% url 'add_category' %}" class="btn btn-primary">Add Category</a>
+        </div>
+        <div class="dashboard-table-wrap">
+        <table class="table table-hover dashboard-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Category Name</th>
+                <th>Created At</th>
+                <th>Updated At</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% if categories %}
+            {% for cat in categories %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ cat }}</td>
+                <td>{{ cat.created_at }}</td>
+                <td>{{ cat.updated_at }}</td>
+                <td>
+                    <a href="{% url 'edit_category' cat.id %}"><i class="fa fa-edit text-success"></i></a>
+                    &nbsp;
+                    <a href="{% url 'delete_category' cat.id %}"><i class="fa fa-trash text-danger"></i></a>
+                </td>
+              </tr>
+            {% endfor %}
+            {% else %}
+              <tr><td colspan="5" class="dashboard-empty">No categories yet. Create one to organize your posts.</td></tr>
+            {% endif %}
+            </tbody>
+          </table>
+        </div>
+    </div>
+</div>
+</div>
+
+{% endblock %}

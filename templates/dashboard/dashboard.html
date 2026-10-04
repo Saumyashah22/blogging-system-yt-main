@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container dashboard-layout">
+<div class="row">
+    <!-- Left sidebar -->
+    <!-- load the sidebar here -->
+    {% include 'dashboard/sidebar.html' %}
+
+    <!-- Right side content -->
+    <div class="col-md-9 dashboard-main">
+        <div class="dashboard-titlebar">
+            <div>
+                <p class="dashboard-eyebrow">Workspace overview</p>
+                <h1>Dashboard</h1>
+            </div>
+            <span class="dashboard-user">Signed in as <strong>{{ user }}</strong></span>
+        </div>
+        <div class="row dashboard-stats">
+            <div class="col-md-6">
+                <div class="card dashboard-stat mb-3">
+                    <div class="card-header">{% if user.is_superuser %}All Categories{% else %}My Categories{% endif %}</div>
+                    <div class="card-body">
+                        <h2 class="card-title">{{ category_count }}</h2>
+                        <p>Organized topics</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card dashboard-stat dashboard-stat-featured mb-3">
+                    <div class="card-header">{% if user.is_superuser %}All Posts{% else %}My Posts{% endif %}</div>
+                    <div class="card-body">
+                        <h2 class="card-title">{{ blogs_count }}</h2>
+                        <p>Stories in your library</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+{% endblock %}

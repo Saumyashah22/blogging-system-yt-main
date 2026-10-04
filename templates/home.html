@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+  <section class="home-intro">
+    <p class="home-kicker">The Ink &amp; Insight journal</p>
+    <h2>Ideas worth<br><em>staying for.</em></h2>
+    <p class="home-intro-copy">Thoughtful stories, fresh perspectives, and notes on the things that move us.</p>
+  </section>
+
+  {% for post in featured_posts %}
+    {% if forloop.first %}
+    <section class="featured-hero" style="background-image: url('{{ post.featured_image.url }}');" aria-label="Featured story: {{ post.title }}">
+      <div class="featured-hero-content">
+        <span class="eyebrow">{{ post.category }}</span>
+        <h1>{{ post.title }}</h1>
+        <p>{{ post.short_description | truncatewords:25 }}</p>
+        <div class="hero-byline">
+          <span>By {{ post.author }}</span>
+          <span>{{ post.created_at | timesince }} ago</span>
+        </div>
+        <a href="{% url 'blogs' post.slug %}" class="hero-link">Read the story <i class="fa fa-arrow-right" aria-hidden="true"></i></a>
+      </div>
+    </section>
+    {% endif %}
+  {% endfor %}
+
+  <section class="section-block">
+    <div class="section-head">
+      <div>
+        <span>Selected reading</span>
+        <h3>Editor’s picks</h3>
+      </div>
+    </div>
+    <div class="row">
+      {% for post in featured_posts %}
+        {% if not forloop.first %}
+        <div class="col-lg-6 mb-4">
+          <article class="story-card pick-card">
+            <a class="story-image-link" href="{% url 'blogs' post.slug %}" tabindex="-1" aria-hidden="true">
+              <img class="story-image" src="{{ post.featured_image.url }}" alt="">
+            </a>
+            <div class="story-card-content">
+            <span class="story-category">{{ post.category }}</span>
+            <div class="story-meta">
+              <span>{{ post.created_at | timesince }} ago</span>
+              <span>By {{ post.author }}</span>
+            </div>
+            <h3><a href="{% url 'blogs' post.slug %}">{{ post.title }}</a></h3>
+            <p>{{ post.short_description | truncatewords:25 }}</p>
+            </div>
+          </article>
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="section-block">
+    <div class="row">
+      <div class="col-lg-8">
+        <div class="section-head">
+          <div>
+            <span>Fresh perspectives</span>
+            <h3>Latest stories</h3>
+          </div>
+        </div>
+
+        <div class="blog-main">
+          {% for post in posts %}
+          <article class="story-card article-card">
+            <a class="article-image-link" href="{% url 'blogs' post.slug %}" tabindex="-1" aria-hidden="true">
+              <img class="article-image" src="{{ post.featured_image.url }}" alt="">
+            </a>
+            <div class="article-card-content">
+              <span class="story-category">{{ post.category }}</span>
+              <div class="story-meta">
+                <span>{{ post.created_at | timesince }} ago</span>
+                <span>By {{ post.author }}</span>
+              </div>
+              <h3><a href="{% url 'blogs' post.slug %}">{{ post.title }}</a></h3>
+              <p>{{ post.short_description | truncatewords:30 }}</p>
+              <a href="{% url 'blogs' post.slug %}" class="text-link">Continue reading <span aria-hidden="true">→</span></a>
+            </div>
+          </article>
+          {% empty %}
+          <div class="side-panel empty-stories">
+            <p>New stories are on their way. Please check back soon.</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <aside class="col-lg-4">
+        <div class="side-panel about-panel mb-4">
+          <span class="panel-kicker">Our point of view</span>
+          <h4>{{ about.about_heading }}</h4>
+          <p>{{ about.about_description }}</p>
+        </div>
+
+        {% if social_links %}
+        <div class="side-panel">
+          <h4>Follow Us</h4>
+          <ul class="social-list">
+            {% for i in social_links %}
+            <li><a href="{{ i.link }}" target="_blank" rel="noreferrer">{{ i.platform }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+      </aside>
+    </div>
+  </section>
+</div>
+{% endblock %}

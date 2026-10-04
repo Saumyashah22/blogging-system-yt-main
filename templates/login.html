@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load crispy_forms_tags %}
+
+<div class="auth-shell">
+    <div class="auth-card">
+        <h3>Welcome back</h3>
+        <p>Sign in to continue reading and publishing stories.</p>
+        <form action="{% url 'login' %}" method="POST">
+            {% csrf_token %}
+            {{ form | crispy }}
+            <button type="submit" class="btn btn-warning">Login</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

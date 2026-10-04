@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container category-page">
+  <header class="category-page-heading">
+    <p class="category-page-kicker">Explore the journal</p>
+    <h1>{{ category }}</h1>
+    <p class="category-page-description">A considered collection of stories and perspectives on {{ category }}.</p>
+  </header>
+
+  <div class="row category-story-grid">
+    {% if posts %}
+    {% for post in posts %}
+    <div class="col-lg-4 col-md-6 mb-4">
+      <article class="category-story-card">
+        {% if post.featured_image %}
+        <a class="category-story-image-link" href="{% url 'blogs' post.slug %}" tabindex="-1" aria-hidden="true">
+          <img class="category-story-image" src="{{ post.featured_image.url }}" alt="">
+        </a>
+        {% endif %}
+        <div class="category-story-content">
+          <span class="category-story-label">{{ post.category }}</span>
+          <div class="category-story-meta">
+            <span>{{ post.created_at | timesince }} ago</span>
+            <span>{{ post.author }}</span>
+          </div>
+          <h2><a href="{% url 'blogs' post.slug %}">{{ post.title }}</a></h2>
+          <p>{{ post.short_description | truncatewords:30 }}</p>
+          <a class="category-story-link" href="{% url 'blogs' post.slug %}">Read story <span aria-hidden="true">→</span></a>
+        </div>
+      </article>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="col-12">
+      <div class="category-empty-state">
+        <span class="category-page-kicker">A quiet moment</span>
+        <h2>No stories here just yet.</h2>
+        <p>There are no published posts in this category. Please check back soon.</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

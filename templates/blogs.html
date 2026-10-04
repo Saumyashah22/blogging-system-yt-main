@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8">
+            <article class="post-article">
+                <header class="mb-4">
+                    <h1 class="post-title">{{ single_blog.title }}</h1>
+                    <div class="post-meta">
+                        <span>Posted on {{ single_blog.created_at }}</span>
+                        <span>by {{ single_blog.author }}</span>
+                    </div>
+                    <a class="category-badge" href="#">{{ single_blog.category }}</a>
+                </header>
+
+                <img class="post-feature-image" src="{{ single_blog.featured_image.url }}" alt="{{ single_blog.title }}" />
+
+                <section class="post-body">
+                    <p class="mb-4"><strong>{{ single_blog.short_description }}</strong></p>
+                    <p>{{ single_blog.blog_body }}</p>
+                </section>
+
+                <section class="comment-section">
+                    <h4>Comments ({{ comment_count }})</h4>
+                    {% if comments %}
+                        {% for comment in comments %}
+                            <div class="comment-card">
+                                <p>{{ comment }}</p>
+                                <small>By {{ comment.user }} • {{ comment.created_at | timesince }} ago</small>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                    <p class="text-muted">No comments yet.</p>
+                    {% endif %}
+
+                    <div class="comment-form mt-4">
+                        {% if user.is_authenticated %}
+                        <form action="" method="POST">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <textarea name="comment" class="form-control" rows="4" placeholder="Write your comment"></textarea>
+                            </div>
+                            <input type="submit" value="Submit" class="btn btn-primary">
+                        </form>
+                        {% else %}
+                        <p>Please <a href="{% url 'login' %}">login</a> to write a comment.</p>
+                        {% endif %}
+                    </div>
+                </section>
+            </article>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="side-panel mb-4">
+                <h4>Categories</h4>
+                <ul class="social-list">
+                    {% for cat in categories %}
+                    <li><a href="{% url 'posts_by_category' cat.id %}">{{ cat.category_name }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            {% if social_links %}
+            <div class="side-panel">
+                <h4>Follow Us</h4>
+                <ul class="social-list">
+                    {% for i in social_links %}
+                    <li><a href="{{ i.link }}" target="_blank" rel="noreferrer">{{ i.platform }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
