@@ -59,15 +59,17 @@
             </div>
         </header>
 
-        <div class="category-bar">
-            <div class="container">
-                <nav class="category-nav" aria-label="Blog categories">
-                    {% for cat in categories %}
-                    <a class="category-link" href="{% url 'posts_by_category' cat.id %}">{{ cat.category_name }}</a>
-                    {% endfor %}
-                </nav>
+        {% if user.is_authenticated %}
+            <div class="category-bar">
+                <div class="container">
+                    <nav class="category-nav" aria-label="Blog categories">
+                        {% for cat in categories %}
+                        <a class="category-link" href="{% url 'posts_by_category' cat.id %}">{{ cat.category_name }}</a>
+                        {% endfor %}
+                    </nav>
+                </div>
             </div>
-        </div>
+        {% endif %}
 
         <main class="content-wrap">
             {% block content %}{% endblock %}
