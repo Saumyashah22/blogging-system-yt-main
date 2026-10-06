@@ -1,5 +1,7 @@
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.db import connection
+from django.db.migrations.executor import MigrationExecutor
+from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
 
 from blogs.models import Blog, Category
@@ -47,10 +49,10 @@ class DashboardOwnershipTests(TestCase):
             blog_body='Body',
         )
 
-    def test_dashboard_counts_only_current_users_content(self):
+    def test_dashboard_counts_shared_categories_and_only_current_users_posts(self):
         response = self.client.get(reverse('dashboard'))
 
-        self.assertEqual(response.context['category_count'], 1)
+        self.assertEqual(response.context['category_count'], 2)
         self.assertEqual(response.context['blogs_count'], 1)
 
     def test_category_list_only_shows_current_users_categories(self):
@@ -85,29 +87,51 @@ class DashboardOwnershipTests(TestCase):
         self.assertEqual(category_response.status_code, 200)
         self.assertEqual(post_response.status_code, 200)
 
-    def test_post_form_only_offers_current_users_categories(self):
+    def test_post_form_offers_categories_shared_by_all_users(self):
         form = BlogPostForm(user=self.user, instance=self.post)
 
         self.assertEqual(
-            list(form.fields['category'].queryset),
-            [self.category],
+            set(form.fields['category'].queryset),
+            {self.category, self.other_category},
         )
 
-    def test_category_names_are_unique_per_user(self):
-        form = CategoryForm(
-            {'category_name': 'My category'},
+    def test_category_names_are_unique_case_insensitively_across_all_users(self):
+        for duplicate_name in ('My category', '  MY CATEGORY  '):
+            with self.subTest(category_name=duplicate_name):
+                form = CategoryForm(
+                    {'category_name': duplicate_name},
+                    user=self.other_user,
+                )
+
+                self.assertFalse(form.is_valid())
+                self.assertIn('category_name', form.errors)
+
+        new_category_form = CategoryForm(
+            {'category_name': '  Shared category  '},
             user=self.other_user,
         )
+        self.assertTrue(new_category_form.is_valid(), new_category_form.errors)
+        new_category = new_category_form.save()
+        self.assertEqual(new_category.author, self.other_user)
+        self.assertEqual(new_category.category_name, 'Shared category')
 
-        self.assertTrue(form.is_valid(), form.errors)
-        category = form.save()
-        self.assertEqual(category.author, self.other_user)
-
-        duplicate_form = CategoryForm(
-            {'category_name': 'My category'},
-            user=self.user,
+    def test_creator_cannot_delete_a_category_used_by_another_writer(self):
+        shared_post = self.create_post(
+            'Shared category post',
+            'shared-category-post',
+            self.category,
+            self.other_user,
         )
-        self.assertFalse(duplicate_form.is_valid())
+
+        response = self.client.get(
+            reverse('delete_category', args=[self.category.pk]),
+            follow=True,
+        )
+
+        self.assertRedirects(response, reverse('categories'))
+        self.assertTrue(Category.objects.filter(pk=self.category.pk).exists())
+        self.assertTrue(Blog.objects.filter(pk=shared_post.pk).exists())
+        self.assertContains(response, 'This category is used by another writer')
 
     def test_superuser_can_view_and_edit_every_users_content(self):
         admin = User.objects.create_superuser(
@@ -189,3 +213,70 @@ class DashboardOwnershipTests(TestCase):
         self.assertEqual(category_delete_response.status_code, 302)
         self.assertFalse(Blog.objects.filter(pk=self.other_post.pk).exists())
         self.assertFalse(Category.objects.filter(pk=self.other_category.pk).exists())
+
+
+class SharedCategoryMigrationTests(TransactionTestCase):
+    migrate_from = [('blogs', '0005_category_author')]
+    migrate_to = [('blogs', '0006_shared_categories')]
+
+    def setUp(self):
+        super().setUp()
+        executor = MigrationExecutor(connection)
+        executor.migrate(self.migrate_from)
+        old_apps = executor.loader.project_state(self.migrate_from).apps
+        User = old_apps.get_model('auth', 'User')
+        Category = old_apps.get_model('blogs', 'Category')
+        Blog = old_apps.get_model('blogs', 'Blog')
+
+        first_user = User.objects.create(username='migration-writer-one')
+        second_user = User.objects.create(username='migration-writer-two')
+        first_category = Category.objects.create(
+            category_name='Sports',
+            author=first_user,
+        )
+        second_category = Category.objects.create(
+            category_name='Sports',
+            author=second_user,
+        )
+        Blog.objects.create(
+            title='First sports story',
+            slug='first-sports-story',
+            category=first_category,
+            author=first_user,
+            featured_image='first.jpg',
+            short_description='First story',
+            blog_body='First story body',
+        )
+        Blog.objects.create(
+            title='Second sports story',
+            slug='second-sports-story',
+            category=second_category,
+            author=second_user,
+            featured_image='second.jpg',
+            short_description='Second story',
+            blog_body='Second story body',
+        )
+
+        executor = MigrationExecutor(connection)
+        executor.migrate(self.migrate_to)
+        new_apps = executor.loader.project_state(self.migrate_to).apps
+        self.Category = new_apps.get_model('blogs', 'Category')
+        self.Blog = new_apps.get_model('blogs', 'Blog')
+
+    def tearDown(self):
+        executor = MigrationExecutor(connection)
+        executor.migrate(executor.loader.graph.leaf_nodes())
+        super().tearDown()
+
+    def test_duplicate_categories_merge_without_losing_posts(self):
+        category = self.Category.objects.get(category_name='Sports')
+        posts = self.Blog.objects.filter(
+            slug__in=['first-sports-story', 'second-sports-story'],
+        )
+
+        self.assertEqual(self.Category.objects.filter(category_name='Sports').count(), 1)
+        self.assertEqual(posts.count(), 2)
+        self.assertEqual(
+            set(posts.values_list('category_id', flat=True)),
+            {category.pk},
+        )

@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib import messages
 
 from blogs.models import Blog, Category
 from django.contrib.auth.decorators import login_required
@@ -10,11 +11,10 @@ from django.contrib.auth.models import User
 
 @login_required(login_url='login')
 def dashboard(request):
+    category_count = Category.objects.count()
     if request.user.is_superuser:
-        category_count = Category.objects.count()
         blogs_count = Blog.objects.count()
     else:
-        category_count = Category.objects.filter(author=request.user).count()
         blogs_count = Blog.objects.filter(author=request.user).count()
 
     context = {
@@ -72,6 +72,15 @@ def delete_category(request, pk):
     if not request.user.is_superuser:
         categories = categories.filter(author=request.user)
     category = get_object_or_404(categories, pk=pk)
+    if (
+        not request.user.is_superuser
+        and Blog.objects.filter(category=category).exclude(author=request.user).exists()
+    ):
+        messages.error(
+            request,
+            'This category is used by another writer and cannot be deleted.',
+        )
+        return redirect('categories')
     category.delete()
     return redirect('categories')
 

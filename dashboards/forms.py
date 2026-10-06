@@ -16,25 +16,21 @@ class CategoryForm(forms.ModelForm):
         fields = ('category_name',)
 
     def clean_category_name(self):
-        category_name = self.cleaned_data['category_name']
+        category_name = self.cleaned_data['category_name'].strip()
         existing_categories = Category.objects.filter(
-            author=self.user,
-            category_name=category_name,
+            category_name__iexact=category_name,
         )
         if self.instance.pk:
             existing_categories = existing_categories.exclude(pk=self.instance.pk)
         if existing_categories.exists():
-            raise forms.ValidationError('You already have a category with this name.')
+            raise forms.ValidationError('A category with this name already exists.')
         return category_name
 
 
 class BlogPostForm(forms.ModelForm):
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
-        categories = Category.objects.all()
-        if not user.is_superuser:
-            categories = categories.filter(author=user)
-        self.fields['category'].queryset = categories
+        self.fields['category'].queryset = Category.objects.all()
 
     class Meta:
         model = Blog

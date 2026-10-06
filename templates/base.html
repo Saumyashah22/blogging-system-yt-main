@@ -72,6 +72,13 @@
         {% endif %}
 
         <main class="content-wrap">
+            {% if messages %}
+                <div class="container">
+                    {% for message in messages %}
+                        <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-{{ message.tags }}{% endif %}" role="alert">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
             {% block content %}{% endblock %}
         </main>
 

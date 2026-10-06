@@ -14,7 +14,7 @@
         <div class="dashboard-titlebar">
             <div>
                 <p class="dashboard-eyebrow">Structure your stories</p>
-                <h1>{% if user.is_superuser %}All Categories{% else %}My Categories{% endif %}</h1>
+                <h1>Categories</h1>
             </div>
             <a href="{% url 'add_category' %}" class="btn btn-primary">Add Category</a>
         </div>
@@ -38,9 +38,11 @@
                 <td>{{ cat.created_at }}</td>
                 <td>{{ cat.updated_at }}</td>
                 <td>
+                    {% if user.is_superuser or cat.author_id == user.id %}
                     <a href="{% url 'edit_category' cat.id %}"><i class="fa fa-edit text-success"></i></a>
                     &nbsp;
                     <a href="{% url 'delete_category' cat.id %}"><i class="fa fa-trash text-danger"></i></a>
+                    {% endif %}
                 </td>
               </tr>
             {% endfor %}

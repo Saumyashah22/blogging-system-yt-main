@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models.functions import Lower
 from django.contrib.auth.models import User
 
 
@@ -6,7 +7,7 @@ class Category(models.Model):
     category_name = models.CharField(max_length=50)
     author = models.ForeignKey(
         User,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         related_name='categories',
         null=True,
         blank=True,
@@ -18,8 +19,8 @@ class Category(models.Model):
         verbose_name_plural = 'categories'
         constraints = [
             models.UniqueConstraint(
-                fields=('author', 'category_name'),
-                name='unique_category_name_per_author',
+                Lower('category_name'),
+                name='unique_category_name_case_insensitive',
             ),
         ]
 
